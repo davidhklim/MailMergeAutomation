@@ -1,0 +1,43 @@
+Sub DocAndPdfMailMergeDoLoop()
+
+
+    Dim MasterDoc As Document, SingleMergeDoc As Document, LastRecordNum As Integer
+    Set MasterDoc = ActiveDocument
+
+    MasterDoc.MailMerge.DataSource.ActiveRecord = wdLastRecord
+    LastRecordNum = MasterDoc.MailMerge.DataSource.ActiveRecord
+    MasterDoc.MailMerge.DataSource.ActiveRecord = wdFirstRecord
+
+    Do While LastRecordNum > 0
+
+        MasterDoc.MailMerge.Destination = wdSendToNewDocument
+        MasterDoc.MailMerge.DataSource.FirstRecord = MasterDoc.MailMerge.DataSource.ActiveRecord
+        MasterDoc.MailMerge.DataSource.LastRecord = MasterDoc.MailMerge.DataSource.ActiveRecord
+        MasterDoc.MailMerge.Execute False
+
+        Set SingleMergeDoc = ActiveDocument
+
+        SingleMergeDoc.SaveAs2 _
+            FileName:=MasterDoc.MailMerge.DataSource.DataFields("DocFolder").Value & Application.PathSeparator & _
+                MasterDoc.MailMerge.DataSource.DataFields("FileName").Value & ".docx", _
+            FileFormat:=wdFormatXMLDocument
+
+        SingleMergeDoc.ExportAsFixedFormat _
+            OutputFileName:=MasterDoc.MailMerge.DataSource.DataFields("PdfFolder").Value & Application.PathSeparator & _
+                MasterDoc.MailMerge.DataSource.DataFields("FileName").Value & ".pdf", _
+            ExportFormat:=wdExportFormatPDF
+
+        SingleMergeDoc.Close False
+
+        If MasterDoc.MailMerge.DataSource.ActiveRecord >= LastRecordNum Then
+            LastRecordNum = 0
+        Else
+            MasterDoc.MailMerge.DataSource.ActiveRecord = wdNextRecord
+        End If
+
+    Loop
+
+End Sub
+
+
+
