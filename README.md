@@ -1,5 +1,6 @@
 # MailMergeAutomation
 
+# 📄 MailMergeAutomation
 
 This guide explains how to set up a **Microsoft Word Mail Merge** and use **VBA automation** to automatically split the merged document into **individual files**, saving them with custom names in specified folders.
 
@@ -66,8 +67,53 @@ This guide explains how to set up a **Microsoft Word Mail Merge** and use **VBA 
 ### **Step 2: Insert the VBA Code**
 1. Press `Alt + F11` in Word to open the VBA editor.
 2. Go to **Insert > Module**.
-3. Paste in the VBA macro code (provided in this repo under `/VBA/MailMergeSplit.vba`).
+3. Paste in the VBA macro code (below).
 4. Save your macro-enabled file.
+
+---
+
+## 💻 VBA Macro Code
+
+```vba
+Sub DocAndPdfMailMergeDoLoop()
+
+    Dim MasterDoc As Document, SingleMergeDoc As Document, LastRecordNum As Integer
+    Set MasterDoc = ActiveDocument
+
+    MasterDoc.MailMerge.DataSource.ActiveRecord = wdLastRecord
+    LastRecordNum = MasterDoc.MailMerge.DataSource.ActiveRecord
+    MasterDoc.MailMerge.DataSource.ActiveRecord = wdFirstRecord
+
+    Do While LastRecordNum > 0
+
+        MasterDoc.MailMerge.Destination = wdSendToNewDocument
+        MasterDoc.MailMerge.DataSource.FirstRecord = MasterDoc.MailMerge.DataSource.ActiveRecord
+        MasterDoc.MailMerge.DataSource.LastRecord = MasterDoc.MailMerge.DataSource.ActiveRecord
+        MasterDoc.MailMerge.Execute False
+
+        Set SingleMergeDoc = ActiveDocument
+
+        SingleMergeDoc.SaveAs2 _
+            FileName:=MasterDoc.MailMerge.DataSource.DataFields("DocFolder").Value & Application.PathSeparator & _
+                MasterDoc.MailMerge.DataSource.DataFields("FileName").Value & ".docx", _
+            FileFormat:=wdFormatXMLDocument
+
+        SingleMergeDoc.ExportAsFixedFormat _
+            OutputFileName:=MasterDoc.MailMerge.DataSource.DataFields("PdfFolder").Value & Application.PathSeparator & _
+                MasterDoc.MailMerge.DataSource.DataFields("FileName").Value & ".pdf", _
+            ExportFormat:=wdExportFormatPDF
+
+        SingleMergeDoc.Close False
+
+        If MasterDoc.MailMerge.DataSource.ActiveRecord >= LastRecordNum Then
+            LastRecordNum = 0
+        Else
+            MasterDoc.MailMerge.DataSource.ActiveRecord = wdNextRecord
+        End If
+
+    Loop
+
+End Sub
 
 ---
 
@@ -99,6 +145,3 @@ This guide explains how to set up a **Microsoft Word Mail Merge** and use **VBA 
 | XYZ Ltd       | Jane Smith           | 456 Oak Ave     | `C:\Contracts\XYZ`             | `ThisContract (XYZ Ltd)`   |
 
 ---
-
-
-
